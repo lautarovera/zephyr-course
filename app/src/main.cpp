@@ -1,33 +1,30 @@
-#include <zephyr/drivers/gpio.h>
+#include <zephyr/device.h>
+#include <zephyr/drivers/sensor.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 
-/* The devicetree node identifier for the "app-led" alias. */
-#define LED_NODE DT_ALIAS(app_led)
-
-static const struct gpio_dt_spec led = GPIO_DT_SPEC_GET(LED_NODE, gpios);
+#include <led_sensor/led_sensor.h>
 
 LOG_MODULE_REGISTER(main, LOG_LEVEL_INF);
 
+static const struct device *const led_sensor = DEVICE_DT_GET_ANY(lv_led_sensor);
+
 int main(void)
 {
-#ifdef CONFIG_APP_BLINKY_ENABLED
-    LOG_INF("Blinky");
-#endif
+    if (!device_is_ready(led_sensor)) {
+        LOG_ERR("LED sensor not ready");
+        return 0;
+    }
 
-    LOG_INF("Heartbeat period: %d ms", CONFIG_APP_HEARTBEAT_PERIOD_MS);
+    const enum sensor_channel led_chan = static_cast<enum sensor_channel>(SENSOR_CHAN_LED_STATE);
+    struct sensor_value state;
 
-    bool led_state = true;
+    while (true) {
+        if (sensor_sample_fetch(led_sensor) < 0) return 0;
+        k_msleep(CONFIG_APP_HEARTBEAT_PERIOD_MS);
 
-    if (!gpio_is_ready_dt(&led)) return 0;
-
-    if (gpio_pin_configure_dt(&led, GPIO_OUTPUT_ACTIVE) < 0) return 0;
-
-    while (1) {
-        if (gpio_pin_toggle_dt(&led) < 0) return 0;
-
-        led_state = !led_state;
-        LOG_INF("LED state: %s", led_state ? "ON" : "OFF");
+        if (sensor_channel_get(led_sensor, led_chan, &state) < 0) return 0;
+        LOG_INF("LED state after fetch: %d", state.val1);
         k_msleep(CONFIG_APP_HEARTBEAT_PERIOD_MS);
     }
     return 0;
