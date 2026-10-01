@@ -1,0 +1,9 @@
+config LED_SENSOR
+    bool "LED sensor driver"
+    default y
+    depends on DT_HAS_LV_LED_SENSOR_ENABLED
+    depends on SENSOR
+    select GPIO
+    help
+      Enable the LED sensor driver: an LED on a GPIO pin exposed
+      through the sensor API.

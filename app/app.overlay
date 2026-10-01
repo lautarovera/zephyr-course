@@ -2,4 +2,10 @@
     aliases {
         app-led = &red_led;
     };
+
+    led_sensor0: led_sensor {
+        compatible = "lv,led-sensor";
+        led = <&green_led>;
+        status = "okay";
+    };
 };

@@ -1,0 +1,7 @@
+description: LED exposed through the sensor API
+compatible: "lv,led-sensor"
+
+properties:
+  led:
+    type: phandle
+    required: true

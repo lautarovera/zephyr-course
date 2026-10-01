@@ -1,0 +1,6 @@
+name: zephyr_course
+build:
+  cmake: led_sensor_module            # folder that contains the CMakeLists.txt
+  kconfig: led_sensor_module/Kconfig  # the Kconfig file itself
+  settings:
+    dts_root: led_sensor_module       # folder that contains dts/bindings/
