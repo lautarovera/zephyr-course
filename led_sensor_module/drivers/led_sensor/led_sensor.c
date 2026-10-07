@@ -19,7 +19,8 @@ struct led_sensor_config {
 };
 
 struct led_sensor_data {
-    bool led_on; /* last level written to the LED */
+    bool led_on;   /* last level written to the LED */
+    bool inverted; /* swaps what fetch and get do */
 };
 
 static int led_sensor_set_led(const struct device *dev, bool on)
@@ -40,11 +41,13 @@ static int led_sensor_set_led(const struct device *dev, bool on)
 
 static int led_sensor_sample_fetch(const struct device *dev, enum sensor_channel chan)
 {
+    struct led_sensor_data *data = dev->data;
+
     if (chan != SENSOR_CHAN_ALL && chan != (enum sensor_channel)SENSOR_CHAN_LED_STATE) {
         return -ENOTSUP;
     }
 
-    return led_sensor_set_led(dev, true);
+    return led_sensor_set_led(dev, !data->inverted);
 }
 
 static int led_sensor_channel_get(const struct device *dev, enum sensor_channel chan,
@@ -56,11 +59,19 @@ static int led_sensor_channel_get(const struct device *dev, enum sensor_channel 
         return -ENOTSUP;
     }
 
-    /* Report the state left by the last fetch, then turn the LED off. */
+    /* Report the state left by the last fetch, then apply the get action. */
     val->val1 = data->led_on ? 1 : 0;
     val->val2 = 0;
 
-    return led_sensor_set_led(dev, false);
+    return led_sensor_set_led(dev, data->inverted);
+}
+
+int led_sensor_set_inverted(const struct device *dev, bool inverted)
+{
+    struct led_sensor_data *data = dev->data;
+
+    data->inverted = inverted;
+    return 0;
 }
 
 static DEVICE_API(sensor, led_sensor_api) = {
